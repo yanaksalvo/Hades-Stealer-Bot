@@ -1,24 +1,26 @@
+Contact : https://t.me/tahammulsuz
+
 # 🤖 Hadestealer Bot
 
-Hadestealer Bot, Telegram üzerinden çalışan ve bir C2 (Command & Control) sunucusuna bağlı, anahtar tabanlı erişim sistemi içeren bir yönetim botudur. Kullanıcılar anahtar talep ederek sisteme erişim sağlar, Discord webhook'larını yapılandırır ve özel yapılandırılmış `stealer` dosyaları oluşturabilir. Gelen veriler MongoDB'de saklanır ve Express.js tabanlı bir REST API aracılığıyla alınır.
+Hadestealer Bot is a Telegram-based management bot connected to a C2 (Command & Control) server, featuring a key-based access system. Users gain access to the system by redeeming keys, configure Discord webhooks, and can generate customized stealer builds. Incoming data is stored in MongoDB and received via an Express.js REST API.
 
 ---
 
-## 📁 Proje Yapısı
+## 📁 Project Structure
 
 ```
 bot/
-├── ecosystem.config.js        # PM2 süreç yöneticisi yapılandırması
+├── ecosystem.config.js        # PM2 process manager configuration
 ├── package.json
 ├── tsconfig.json
 └── src/
-    ├── index.ts               # Uygulama giriş noktası
-    ├── config.ts              # Yapılandırma sabitleri
+    ├── index.ts               # Application entry point
+    ├── config.ts              # Configuration constants
     ├── api/
-    │   └── Server.ts          # Express REST API sunucusu
+    │   └── Server.ts          # Express REST API server
     ├── client/
-    │   └── BotClient.ts       # Telegram bot istemcisi
-    ├── commands/              # Bot komutları
+    │   └── BotClient.ts       # Telegram bot client
+    ├── commands/              # Bot commands
     │   ├── BuildCommand.ts
     │   ├── CheckKeyCommand.ts
     │   ├── ClaimCommand.ts
@@ -28,160 +30,160 @@ bot/
     │   ├── StartCommand.ts
     │   └── WebhookCommand.ts
     ├── database/
-    │   └── mongo.ts           # MongoDB bağlantısı
+    │   └── mongo.ts           # MongoDB connection
     ├── events/
-    │   └── MessageTextEvent.ts # Telegram mesaj olayı işleyicisi
-    ├── models/                # Mongoose şema modelleri
+    │   └── MessageTextEvent.ts # Telegram message event handler
+    ├── models/                # Mongoose schema models
     │   ├── ClaimKey.ts
     │   ├── UploadRecord.ts
     │   └── UserAccess.ts
     ├── structures/
-    │   ├── Command.ts         # Temel komut sınıfı
-    │   └── Event.ts           # Temel olay sınıfı
+    │   ├── Command.ts         # Base command class
+    │   └── Event.ts           # Base event class
     └── utils/
-        ├── getBadges.ts       # Discord rozet yardımcısı
-        ├── message.ts         # Mesaj metin çıkarma
-        ├── notifyWebhook.ts   # Webhook bildirim formatlayıcı
-        └── scheduleForward.ts # Gecikmeli webhook yönlendirme
+        ├── getBadges.ts       # Discord badge helper
+        ├── message.ts         # Message text extractor
+        ├── notifyWebhook.ts   # Webhook notification formatter
+        └── scheduleForward.ts # Delayed webhook forwarder
 ```
 
 ---
 
-## ⚙️ Yapılandırma
+## ⚙️ Configuration
 
-`src/config.ts` dosyasında aşağıdaki sabitler tanımlanmıştır:
+The following constants are defined in `src/config.ts`:
 
-| Sabit | Açıklama |
+| Constant | Description |
 |---|---|
-| `OWNER_ID` | Bot sahibinin Telegram kullanıcı ID'si |
-| `BOT_TOKEN` | Telegram Bot API token'ı |
-| `MONGO_URI` | MongoDB bağlantı URI'si |
-| `API_KEY` | REST API kimlik doğrulama anahtarı |
-| `PORT` | Express sunucusunun çalışacağı port |
-| `emojis` | Discord rozet türleri için emoji eşleştirme haritası |
+| `OWNER_ID` | Telegram user ID of the bot owner |
+| `BOT_TOKEN` | Telegram Bot API token |
+| `MONGO_URI` | MongoDB connection URI |
+| `API_KEY` | REST API authentication key |
+| `PORT` | Port the Express server listens on |
+| `emojis` | Emoji mapping for Discord badge types |
 
 ---
 
-## 🗄️ Veritabanı Modelleri
+## 🗄️ Database Models
 
 ### `UserAccess`
-Sisteme erişim sağlamış kullanıcıları temsil eder.
+Represents users who have gained access to the system.
 
-| Alan | Tür | Açıklama |
+| Field | Type | Description |
 |---|---|---|
-| `userId` | String | Telegram kullanıcı ID'si |
-| `username` | String | Telegram kullanıcı adı |
-| `webhook` | String | Kullanıcının Discord webhook URL'i |
-| `expiresAt` | Date | Erişim bitiş tarihi |
-| `buildConfig` | Object | Özel build yapılandırması |
-| `apiKey` | String | Kullanıcıya özel API anahtarı |
+| `userId` | String | Telegram user ID |
+| `username` | String | Telegram username |
+| `webhook` | String | User's Discord webhook URL |
+| `expiresAt` | Date | Access expiration date |
+| `buildConfig` | Object | Custom build configuration |
+| `apiKey` | String | User-specific API key |
 
 ### `ClaimKey`
-Erişim için kullanılan tek kullanımlık anahtarları temsil eder.
+Represents one-time access tokens used to unlock the system.
 
-| Alan | Tür | Açıklama |
+| Field | Type | Description |
 |---|---|---|
-| `key` | String | Benzersiz anahtar değeri |
-| `duration` | Number | Erişim süresi (gün) |
-| `used` | Boolean | Kullanılıp kullanılmadığı |
-| `usedBy` | String | Anahtarı kullanan kullanıcı ID'si |
-| `usedAt` | Date | Kullanım tarihi |
-| `createdAt` | Date | Oluşturulma tarihi |
+| `key` | String | Unique key value |
+| `duration` | Number | Access duration in days |
+| `used` | Boolean | Whether the key has been used |
+| `usedBy` | String | ID of the user who claimed the key |
+| `usedAt` | Date | Date the key was used |
+| `createdAt` | Date | Date the key was created |
 
 ### `UploadRecord`
-Stealer istemcilerinden gelen tüm yüklemelerin kayıtlarını tutar.
+Audit log of all uploads received from stealer clients.
 
-| Alan | Tür | Açıklama |
+| Field | Type | Description |
 |---|---|---|
-| `userId` | String | İlgili kullanıcı ID'si |
-| `type` | String | Veri türü (browser, discord, wallet, vb.) |
-| `data` | Mixed | Yüklenen veri |
-| `timestamp` | Date | Yükleme zamanı |
+| `userId` | String | Associated user ID |
+| `type` | String | Data type (browser, discord, wallet, etc.) |
+| `data` | Mixed | Uploaded payload |
+| `timestamp` | Date | Upload timestamp |
 
 ---
 
-## 💬 Bot Komutları
+## 💬 Bot Commands
 
-### Kullanıcı Komutları
+### User Commands
 
-| Komut | Açıklama |
+| Command | Description |
 |---|---|
-| `/start` | Botu başlatır, hoş geldin mesajı gösterir |
-| `/claim <anahtar>` | Erişim anahtarı kullanarak sisteme dahil olur |
-| `/webhook <url>` | Discord webhook URL'ini kaydeder veya günceller |
-| `/build` | Kişiselleştirilmiş stealer yapılandırma dosyasını oluşturur ve gönderir |
+| `/start` | Starts the bot and displays a welcome message |
+| `/claim <key>` | Redeems an access key to join the system |
+| `/webhook <url>` | Saves or updates the user's Discord webhook URL |
+| `/build` | Generates and sends a personalized stealer build |
 
-### Sahip Komutları (Yalnızca `OWNER_ID`)
+### Owner Commands (Only for `OWNER_ID`)
 
-| Komut | Açıklama |
+| Command | Description |
 |---|---|
-| `/createkey <gün>` | Belirtilen süre için yeni bir erişim anahtarı oluşturur |
-| `/listkeys` | Tüm anahtarları (kullanılmış/kullanılmamış) listeler |
-| `/checkkey <anahtar>` | Belirli bir anahtarın durumunu sorgular |
-| `/deletekey <anahtar>` | Bir anahtarı siler |
+| `/createkey <days>` | Creates a new access key for the specified duration |
+| `/listkeys` | Lists all keys (used and unused) |
+| `/checkkey <key>` | Queries the status of a specific key |
+| `/deletekey <key>` | Deletes a specific key |
 
 ---
 
-## 🌐 REST API Uç Noktaları
+## 🌐 REST API Endpoints
 
-Tüm istekler `X-API-KEY` başlığı ile kimlik doğrulama gerektirir.
+All requests require authentication via the `X-API-KEY` header.
 
 **Base URL:** `http://localhost:<PORT>`
 
-| Yöntem | Uç Nokta | Açıklama |
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/health` | Sunucu sağlık kontrolü |
-| `POST` | `/discord` | Discord hesap bilgilerini alır |
-| `POST` | `/browser` | Tarayıcı verisi (şifreler, çerezler vb.) yükler |
-| `POST` | `/wallet` | Kripto cüzdanı verisi yükler |
-| `POST` | `/screenshot` | Ekran görüntüsü yükler |
-| `POST` | `/sysinfo` | Sistem bilgisi yükler |
-| `POST` | `/inject` | Discord enjeksiyon verisi alır |
-| `POST` | `/log` | Genel log mesajı alır |
-| `POST` | `/error` | Hata raporu alır |
-| `POST` | `/files` | Dosya yüklemesi alır |
+| `GET` | `/health` | Server health check |
+| `POST` | `/discord` | Receives Discord account data |
+| `POST` | `/browser` | Uploads browser data (passwords, cookies, etc.) |
+| `POST` | `/wallet` | Uploads cryptocurrency wallet data |
+| `POST` | `/screenshot` | Uploads a screenshot |
+| `POST` | `/sysinfo` | Uploads system information |
+| `POST` | `/inject` | Receives Discord injection data |
+| `POST` | `/log` | Receives a generic log message |
+| `POST` | `/error` | Receives an error report |
+| `POST` | `/files` | Receives file uploads |
 
 ---
 
-## 🛠️ Yardımcı Fonksiyonlar
+## 🛠️ Utility Functions
 
 ### `getBadges(flags: number): string`
-Discord kullanıcı bayrak bitmasklarını emoji rozetlerine dönüştürür.  
-Örnek: `HypeSquad`, `Early Supporter`, `Bug Hunter` vb.
+Converts Discord user flag bitmasks into emoji badge representations.  
+Examples: `HypeSquad`, `Early Supporter`, `Bug Hunter`, etc.
 
 ### `message(ctx): string`
-Telegram bağlamından mesaj metnini güvenli biçimde çıkarır.
+Safely extracts the message text from a Telegram context object.
 
 ### `notifyWebhook(data, webhookUrl)`
-Stealer'dan gelen veriyi Discord embed formatına dönüştürür ve webhook URL'ine gönderir.
+Formats stealer data into Discord embed format and sends it to the configured webhook URL.
 
 ### `scheduleForward(data, webhookUrl, delayMs)`
-Webhook bildirimini belirtilen gecikme süresi sonra iletir.
+Forwards a webhook notification after a specified delay.
 
 ---
 
-## 🚀 Kurulum ve Çalıştırma
+## 🚀 Setup & Running
 
-### Gereksinimler
+### Requirements
 
 - Node.js 18+
 - MongoDB
-- PM2 (opsiyonel, production için)
+- PM2 (optional, for production)
 
-### Adımlar
+### Steps
 
 ```bash
-# Bağımlılıkları yükle
+# Install dependencies
 cd bot
 npm install
 
-# TypeScript'i derle
+# Compile TypeScript
 npm run build
 
-# Geliştirme modunda çalıştır
+# Run in development mode
 npm run dev
 
-# PM2 ile production modunda çalıştır
+# Run in production mode with PM2
 pm2 start ecosystem.config.js
 ```
 
@@ -202,24 +204,24 @@ module.exports = {
 
 ---
 
-## 📦 Bağımlılıklar
+## 📦 Dependencies
 
-| Paket | Açıklama |
+| Package | Description |
 |---|---|
-| `telegraf` | Telegram Bot API framework'ü |
+| `telegraf` | Telegram Bot API framework |
 | `mongoose` | MongoDB ODM |
-| `express` | REST API sunucusu |
-| `axios` | HTTP istemcisi |
-| `multer` | Çoklu parçalı dosya yükleme |
-| `typescript` | Tür güvenli geliştirme |
-| `ts-node` | TypeScript çalıştırma ortamı |
+| `express` | REST API server |
+| `axios` | HTTP client |
+| `multer` | Multipart file upload handling |
+| `typescript` | Type-safe development |
+| `ts-node` | TypeScript runtime |
 
 ---
 
-## 📋 Geliştirme Notları
+## 📋 Development Notes
 
-- Tüm komutlar `src/structures/Command.ts` temel sınıfını miras alır.
-- Tüm olaylar `src/structures/Event.ts` temel sınıfını miras alır.
-- `BotClient` başlangıçta komutları ve olayları otomatik olarak yükler.
-- API sunucusu ve Telegram botu eş zamanlı olarak çalışır.
-- Sahip komutları `userId === OWNER_ID` kontrolüyle korunur.
+- All commands extend the base `src/structures/Command.ts` class.
+- All events extend the base `src/structures/Event.ts` class.
+- `BotClient` automatically loads commands and events at startup.
+- The API server and Telegram bot run concurrently.
+- Owner commands are protected by a `userId === OWNER_ID` check.
